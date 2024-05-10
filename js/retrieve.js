@@ -1,3 +1,4 @@
+// Import required modules
 const axios = require('axios');
 const mysql = require('mysql');
 
@@ -18,50 +19,50 @@ const WORKSPACE_ID = '6786735758698372';
 // Define columns for each table
 const tableColumns = {
     'CityWalkSchedule': [
-        { title: 'Employee Name', primary: true, type: 'TEXT_NUMBER' },
-        { title: 'Lead Status', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time In', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time Out', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'EmployeeName', primary: true, type: 'TEXT_NUMBER' },
+        { title: 'LeadStatus', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeIn', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeOut', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Incentive', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Notes', primary: false, type: 'TEXT_NUMBER' }
     ],
     'EpicSchedule': [
-        { title: 'Employee Name', primary: true, type: 'TEXT_NUMBER' },
-        { title: 'Lead Status', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time In', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time Out', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'EmployeeName', primary: true, type: 'TEXT_NUMBER' },
+        { title: 'LeadStatus', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeIn', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeOut', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Incentive', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Notes', primary: false, type: 'TEXT_NUMBER' }
     ],
     'IOASchedule': [
-        { title: 'Employee Name', primary: true, type: 'TEXT_NUMBER' },
-        { title: 'Lead Status', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time In', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time Out', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'EmployeeName', primary: true, type: 'TEXT_NUMBER' },
+        { title: 'LeadStatus', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeIn', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeOut', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Incentive', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Notes', primary: false, type: 'TEXT_NUMBER' }
     ],
     'NotParkBasedSchedule': [
-        { title: 'Employee Name', primary: true, type: 'TEXT_NUMBER' },
-        { title: 'Lead Status', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time In', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time Out', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'EmployeeName', primary: true, type: 'TEXT_NUMBER' },
+        { title: 'LeadStatus', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeIn', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeOut', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Incentive', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Notes', primary: false, type: 'TEXT_NUMBER' }
     ],
     'VolcanoBaySchedule': [
-        { title: 'Employee Name', primary: true, type: 'TEXT_NUMBER' },
-        { title: 'Lead Status', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time In', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time Out', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'EmployeeName', primary: true, type: 'TEXT_NUMBER' },
+        { title: 'LeadStatus', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeIn', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeOut', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Incentive', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Notes', primary: false, type: 'TEXT_NUMBER' }
     ],
     'USFSchedule': [
-        { title: 'Employee Name', primary: true, type: 'TEXT_NUMBER' },
-        { title: 'Lead Status', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time In', primary: false, type: 'TEXT_NUMBER' },
-        { title: 'Time Out', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'EmployeeName', primary: true, type: 'TEXT_NUMBER' },
+        { title: 'LeadStatus', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeIn', primary: false, type: 'TEXT_NUMBER' },
+        { title: 'TimeOut', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Incentive', primary: false, type: 'TEXT_NUMBER' },
         { title: 'Notes', primary: false, type: 'TEXT_NUMBER' }
     ]
@@ -84,7 +85,7 @@ async function createSmartsheetForTable(tableName, columns) {
 
         // Make POST request to create sheet within workspace
         const response = await axios.post(`https://api.smartsheet.com/2.0/workspaces/${WORKSPACE_ID}/sheets`, payload, { headers });
-
+        
         console.log(`New Smartsheet for table ${tableName} created with ID:`, response.data.result.id);
 
         // Return the Smartsheet ID
@@ -107,11 +108,24 @@ const getCurrentDateTime = () => {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
+// Function to fetch data from the database
+const queryDatabase = (query) => {
+    return new Promise((resolve, reject) => {
+        connection.query(query, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+};
+
 // Create a connection to the database
 const connection = mysql.createConnection(dbConfig);
 
 // Attempt to connect to the database
-connection.connect((err) => {
+connection.connect(async (err) => {
     if (err) {
         console.error('Error connecting to database:', err);
         return;
@@ -119,77 +133,65 @@ connection.connect((err) => {
     
     console.log('Database connection successful');
     
-    // Define tables to fetch data from
-    const tables = ['CityWalkSchedule', 'EpicSchedule', 'IOASchedule', 'NotParkBasedSchedule', 'VolcanoBaySchedule', 'USFSchedule'];
+    try {
+        // Define tables to fetch data from
+        const tables = ['CityWalkSchedule', 'EpicSchedule', 'IOASchedule', 'NotParkBasedSchedule', 'VolcanoBaySchedule', 'USFSchedule'];
 
-    // Counter to keep track of completed queries
-    let completedQueries = 0;
-
-    // Iterate over tables and create Smartsheets
-    tables.forEach(async (table) => {
-        // Get columns for the current table
-        const columns = tableColumns[table];
-        
-        try {
+        // Iterate over tables and create Smartsheets
+        for (const table of tables) {
+            // Get columns for the current table
+            const columns = tableColumns[table];
+            
             // Create Smartsheet with columns
             const sheetId = await createSmartsheetForTable(table, columns);
             
             // Fetch data from database
-            connection.query(`SELECT * FROM ${table}`, (error, results) => {
-                if (error) {
-                    console.error(`Error fetching data from table ${table}:`, error);
-                    return;
-                }
+            const results = await queryDatabase(`SELECT * FROM ${table}`);
+            
+            // Check if there are results
+            if (results && results.length > 0) {
+                // Log retrieved data to console
+                console.log(`Data retrieved from table ${table}:`, results);
                 
-                // Check if there are results
-                if (results && results.length > 0) {
-                    // Log retrieved data to console
-                    console.log(`Data retrieved from table ${table}:`, results);
-                    
-                    // Extract data rows
-                    const data = results.map(row => Object.values(row));
-                    
-                    // Update Smartsheet with fetched data
-                    updateSmartsheet(sheetId, data);
-                } else {
-                    console.log(`No data found in table ${table}, skipping update of Smartsheet`);
-                }
-
-                // Increment completed queries counter
-                completedQueries++;
+                // Extract data rows
+                const data = results.map(row => Object.values(row));
                 
-                // If all queries have completed, close the connection
-                if (completedQueries === tables.length) {
-                    connection.end();
-                }
-            });
-        } catch (error) {
-            console.error(`Error creating Smartsheet for table ${table}:`, error);
+                // Update Smartsheet with fetched data
+                await updateSmartsheet(sheetId, data);
+            } else {
+                console.log(`No data found in table ${table}, skipping update of Smartsheet`);
+            }
         }
-    });
+        
+        // Close the connection when done
+        connection.end();
+    } catch (error) {
+        console.error('Error:', error);
+        connection.end(); // Close the connection in case of error
+    }
 });
-
 
 // Function to update existing Smartsheet with data
 async function updateSmartsheet(sheetId, data) {
-    try {
-        console.log("Data to be updated in Smartsheet:", data); // Add this line to inspect the data
-        
-        const headers = {
-            'Authorization': `Bearer ${API_TOKEN}`,
-            'Content-Type': 'application/json'
-        };
-
-        const payload = {
-            rows: data.map(row => ({
-                cells: row.map(value => ({ value }))
-            }))
-        };
-
-        const response = await axios.post(`https://api.smartsheet.com/2.0/sheets/${sheetId}/rows`, payload, { headers });
-
-        console.log(`Data updated in Smartsheet with ID ${sheetId}`);
-    } catch (error) {
-        console.error(`Error updating data in Smartsheet with ID ${sheetId}:`, error.response.data);
+    async function updateSmartsheet(sheetId, data) {
+        try {
+            const headers = {
+                'Authorization': `Bearer ${API_TOKEN}`,
+                'Content-Type': 'application/json'
+            };
+            
+            const payload = {
+                rows: data.map(row => ({
+                    toBottom: true,
+                    cells: row.map(value => ({ value }))
+                }))
+            };
+    
+            const response = await axios.post(`https://api.smartsheet.com/2.0/sheets/${sheetId}/rows`, payload, { headers });
+    
+            console.log(`Data updated in Smartsheet with ID ${sheetId}`);
+        } catch (error) {
+            console.error(`Error updating data in Smartsheet with ID ${sheetId}:`, error.response.data);
+        }
     }
 }
