@@ -9,6 +9,7 @@
   "author": "Zeke",
   "license": "ISC",
   "dependencies": {
+    "moment": "^2.30.1",
     "mysql": "^2.18.1",
     "smartsheet": "^4.0.2"
   }
